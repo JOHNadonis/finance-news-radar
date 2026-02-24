@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0">
+  <head>
+    <title>Finance News Radar - RSS Sources</title>
+    <dateCreated>2026-02-24</dateCreated>
+  </head>
+  <body>
+    <!-- === Global Macro & Markets === -->
+    <outline text="Global Macro &amp; Markets">
+      <outline text="Reuters Business" type="rss"
+        xmlUrl="https://www.reutersagency.com/feed/?best-topics=business-finance"
+        htmlUrl="https://www.reuters.com/business/" />
+      <outline text="CNBC Top News" type="rss"
+        xmlUrl="https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&amp;id=100003114"
+        htmlUrl="https://www.cnbc.com/" />
+      <outline text="CNBC World" type="rss"
+        xmlUrl="https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&amp;id=100727362"
+        htmlUrl="https://www.cnbc.com/world/" />
+      <outline text="MarketWatch Top Stories" type="rss"
+        xmlUrl="https://feeds.content.dowjones.io/public/rss/mw_topstories"
+        htmlUrl="https://www.marketwatch.com/" />
+      <outline text="MarketWatch Market Pulse" type="rss"
+        xmlUrl="https://feeds.content.dowjones.io/public/rss/mw_marketpulse"
+        htmlUrl="https://www.marketwatch.com/market-pulse" />
+      <outline text="Financial Times" type="rss"
+        xmlUrl="https://www.ft.com/?format=rss"
+        htmlUrl="https://www.ft.com/" />
+      <outline text="Bloomberg Markets" type="rss"
+        xmlUrl="https://feeds.bloomberg.com/markets/news.rss"
+        htmlUrl="https://www.bloomberg.com/markets" />
+      <outline text="WSJ Markets" type="rss"
+        xmlUrl="https://feeds.a.dj.com/rss/RSSMarketsMain.xml"
+        htmlUrl="https://www.wsj.com/news/markets" />
+      <outline text="Yahoo Finance" type="rss"
+        xmlUrl="https://finance.yahoo.com/news/rssindex"
+        htmlUrl="https://finance.yahoo.com/" />
+      <outline text="Investing.com News" type="rss"
+        xmlUrl="https://www.investing.com/rss/news.rss"
+        htmlUrl="https://www.investing.com/news/" />
+    </outline>
+
+    <!-- === US Stocks & Analysis === -->
+    <outline text="US Stocks &amp; Analysis">
+      <outline text="Seeking Alpha Market News" type="rss"
+        xmlUrl="https://seekingalpha.com/market_currents.xml"
+        htmlUrl="https://seekingalpha.com/" />
+      <outline text="Seeking Alpha Top Ideas" type="rss"
+        xmlUrl="https://seekingalpha.com/tag/top-ideas.xml"
+        htmlUrl="https://seekingalpha.com/tag/top-ideas" />
+      <outline text="Zero Hedge" type="rss"
+        xmlUrl="https://feeds.feedburner.com/zerohedge/feed"
+        htmlUrl="https://www.zerohedge.com/" />
+      <outline text="The Motley Fool" type="rss"
+        xmlUrl="https://www.fool.com/feeds/index.aspx"
+        htmlUrl="https://www.fool.com/" />
+      <outline text="Barrons" type="rss"
+        xmlUrl="https://feeds.content.dowjones.io/public/rss/barrons"
+        htmlUrl="https://www.barrons.com/" />
+    </outline>
+
+    <!-- === Crypto === -->
+    <outline text="Crypto">
+      <outline text="CoinDesk" type="rss"
+        xmlUrl="https://www.coindesk.com/arc/outboundfeeds/rss/"
+        htmlUrl="https://www.coindesk.com/" />
+      <outline text="The Block" type="rss"
+        xmlUrl="https://www.theblock.co/rss.xml"
+        htmlUrl="https://www.theblock.co/" />
+      <outline text="Decrypt" type="rss"
+        xmlUrl="https://decrypt.co/feed"
+        htmlUrl="https://decrypt.co/" />
+      <outline text="CoinTelegraph" type="rss"
+        xmlUrl="https://cointelegraph.com/rss"
+        htmlUrl="https://cointelegraph.com/" />
+      <outline text="Blockworks" type="rss"
+        xmlUrl="https://blockworks.co/feed"
+        htmlUrl="https://blockworks.co/" />
+    </outline>
+
+    <!-- === Central Banks & Macro Data === -->
+    <outline text="Central Banks &amp; Macro">
+      <outline text="Fed Reserve News" type="rss"
+        xmlUrl="https://www.federalreserve.gov/feeds/press_all.xml"
+        htmlUrl="https://www.federalreserve.gov/newsevents.htm" />
+      <outline text="ECB Press Releases" type="rss"
+        xmlUrl="https://www.ecb.europa.eu/rss/press.html"
+        htmlUrl="https://www.ecb.europa.eu/press/" />
+    </outline>
+
+    <!-- === Commodities & Forex === -->
+    <outline text="Commodities &amp; Forex">
+      <outline text="Oil Price" type="rss"
+        xmlUrl="https://oilprice.com/rss/main"
+        htmlUrl="https://oilprice.com/" />
+      <outline text="Kitco Gold News" type="rss"
+        xmlUrl="https://www.kitco.com/feed/rss/news/gold"
+        htmlUrl="https://www.kitco.com/news/gold" />
+    </outline>
+
+    <!-- === Chinese Finance === -->
+    <outline text="Chinese Finance">
+      <outline text="36Kr Finance" type="rss"
+        xmlUrl="https://36kr.com/feed"
+        htmlUrl="https://36kr.com/" />
+      <outline text="InfoQ China" type="rss"
+        xmlUrl="https://www.infoq.cn/feed"
+        htmlUrl="https://www.infoq.cn/" />
+    </outline>
+  </body>
+</opml>
