@@ -49,6 +49,18 @@ jobs:
             python scripts/update_finance.py --output-dir data --window-hours 24
           fi
 
+      - name: Fetch sentiment indicators
+        continue-on-error: true
+        run: python scripts/fetch_sentiment.py --output-dir data
+
+      - name: Fetch economic calendar
+        continue-on-error: true
+        run: python scripts/fetch_calendar.py --output-dir data
+
+      - name: Generate market summary
+        continue-on-error: true
+        run: python scripts/generate_summary.py --data-dir data --output-dir data --no-llm
+
       - name: Commit and push
         run: |
           if git diff --quiet; then

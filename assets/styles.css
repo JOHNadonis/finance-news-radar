@@ -365,3 +365,208 @@ select { cursor: pointer; }
 }
 
 .news-card { animation: fade-up 250ms ease; }
+
+/* ── Sentiment Panel ── */
+.sentiment-panel {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sentiment-card {
+  flex: 1;
+  min-width: 120px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  text-align: center;
+}
+
+.sentiment-value {
+  font-family: "Inter", sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.sentiment-label {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.sentiment-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ── Market Summary ── */
+.summary-section {
+  margin-top: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel);
+  padding: 16px;
+}
+
+.summary-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.summary-head h2 {
+  margin: 0;
+  font-family: "Inter", "Noto Sans SC", sans-serif;
+  font-size: 16px;
+}
+
+.summary-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  background: rgba(29, 155, 240, 0.15);
+  color: var(--accent-2);
+}
+
+.summary-text {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ink);
+  white-space: pre-wrap;
+}
+
+.summary-pills {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.summary-pill {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+
+.summary-pill b {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* ── Economic Calendar ── */
+.calendar-section {
+  margin-top: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel);
+  overflow: hidden;
+}
+
+.calendar-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.calendar-head h2 {
+  margin: 0;
+  font-family: "Inter", "Noto Sans SC", sans-serif;
+  font-size: 16px;
+}
+
+.cal-tabs { display: flex; gap: 4px; }
+
+.cal-tab {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 150ms;
+}
+
+.cal-tab:hover { border-color: var(--accent); color: var(--ink); }
+.cal-tab.active {
+  background: rgba(247, 147, 26, 0.15);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.calendar-list { max-height: 320px; overflow-y: auto; }
+
+.cal-event {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 13px;
+}
+.cal-event:first-child { border-top: 0; }
+
+.cal-event.cal-high {
+  background: rgba(255, 23, 68, 0.06);
+}
+
+.cal-event.cal-med {
+  background: rgba(247, 147, 26, 0.04);
+}
+
+.cal-time {
+  font-family: "Inter", monospace;
+  font-size: 12px;
+  color: var(--muted);
+  min-width: 42px;
+}
+
+.cal-country {
+  font-size: 12px;
+  font-weight: 600;
+  min-width: 50px;
+}
+
+.cal-stars {
+  font-size: 11px;
+  color: var(--accent);
+  min-width: 36px;
+}
+
+.cal-indicator {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cal-values {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--muted);
+  margin-left: auto;
+}
+
+.cal-actual { color: var(--accent); font-weight: 600; }
+
+@media (max-width: 760px) {
+  .sentiment-panel { flex-direction: column; }
+  .calendar-head { flex-direction: column; gap: 8px; align-items: flex-start; }
+  .cal-event { font-size: 12px; }
+  .cal-values { flex-wrap: wrap; }
+}
