@@ -31,6 +31,11 @@ const allDedupeToggleEl = $("allDedupeToggle");
 const allDedupeLabelEl = $("allDedupeLabel");
 const marketTabsEl = $("marketTabs");
 
+function escapeHTML(str) {
+  if (!str) return "";
+  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
 const MARKET_LABELS = {
   a_stock: "A股", us_stock: "美股", hk_stock: "港股",
   macro: "宏观", crypto: "加密", commodity: "大宗", forex: "外汇", general: "综合",
@@ -200,7 +205,7 @@ function buildSourceGroupNode(source, items) {
   const section = document.createElement("section");
   section.className = "source-group";
   section.innerHTML = `
-    <header class="source-group-head"><h3>${source}</h3><span>${fmtNumber(items.length)} 条</span></header>
+    <header class="source-group-head"><h3>${escapeHTML(source)}</h3><span>${fmtNumber(items.length)} 条</span></header>
     <div class="source-group-list"></div>`;
   const listEl = section.querySelector(".source-group-list");
   items.forEach((item) => listEl.appendChild(renderItemNode(item)));
@@ -246,7 +251,7 @@ function renderList() {
   sites.forEach(([, site]) => {
     const sec = document.createElement("section");
     sec.className = "site-group";
-    sec.innerHTML = `<header class="site-group-head"><h3>${site.siteName}</h3><span>${fmtNumber(site.items.length)} 条</span></header><div class="site-group-list"></div>`;
+    sec.innerHTML = `<header class="site-group-head"><h3>${escapeHTML(site.siteName)}</h3><span>${fmtNumber(site.items.length)} 条</span></header><div class="site-group-list"></div>`;
     const listEl = sec.querySelector(".site-group-list");
     groupBySource(site.items).forEach(([source, items]) => {
       listEl.appendChild(buildSourceGroupNode(source, items));
@@ -309,9 +314,9 @@ function renderSentiment(d, panel) {
 
   panel.innerHTML = cards.map((c) => `
     <div class="sentiment-card">
-      <div class="sentiment-value" style="color:${c.color}">${c.value}</div>
-      <div class="sentiment-label">${c.label}</div>
-      <div class="sentiment-sub">${c.sub}</div>
+      <div class="sentiment-value" style="color:${c.color}">${escapeHTML(c.value)}</div>
+      <div class="sentiment-label">${escapeHTML(c.label)}</div>
+      <div class="sentiment-sub">${escapeHTML(c.sub)}</div>
     </div>
   `).join("");
 }
@@ -332,13 +337,13 @@ async function fetchSummary() {
 function renderSummary(d, section) {
   const typeBadge = d.type === "llm" ? '<span class="summary-badge">AI 生成</span>' : '';
   const pills = Object.entries(d.sections || {}).map(([tag, s]) => {
-    const label = MARKET_LABELS[tag] || tag;
+    const label = MARKET_LABELS[tag] || escapeHTML(tag);
     return `<span class="summary-pill">${label} <b>${s.total}</b></span>`;
   }).join("");
 
   section.innerHTML = `
     <div class="summary-head"><h2>市场速览</h2>${typeBadge}</div>
-    <div class="summary-text">${d.text.replace(/\n/g, "<br>")}</div>
+    <div class="summary-text">${escapeHTML(d.text).replace(/\n/g, "<br>")}</div>
     <div class="summary-pills">${pills}</div>
   `;
 }
@@ -383,14 +388,14 @@ function renderCalendar(d, section) {
       const stars = "★".repeat(e.importance || 1) + "☆".repeat(3 - (e.importance || 1));
       const impClass = e.importance >= 3 ? "cal-high" : e.importance >= 2 ? "cal-med" : "";
       return `<div class="cal-event ${impClass}">
-        <span class="cal-time">${e.time || "--:--"}</span>
-        <span class="cal-country">${e.country || ""}</span>
+        <span class="cal-time">${escapeHTML(e.time) || "--:--"}</span>
+        <span class="cal-country">${escapeHTML(e.country)}</span>
         <span class="cal-stars">${stars}</span>
-        <span class="cal-indicator">${e.indicator || ""}</span>
+        <span class="cal-indicator">${escapeHTML(e.indicator)}</span>
         <span class="cal-values">
-          ${e.previous ? `<span class="cal-prev">前 ${e.previous}</span>` : ""}
-          ${e.forecast ? `<span class="cal-forecast">预 ${e.forecast}</span>` : ""}
-          ${e.actual ? `<span class="cal-actual">实 ${e.actual}</span>` : ""}
+          ${e.previous ? `<span class="cal-prev">前 ${escapeHTML(e.previous)}</span>` : ""}
+          ${e.forecast ? `<span class="cal-forecast">预 ${escapeHTML(e.forecast)}</span>` : ""}
+          ${e.actual ? `<span class="cal-actual">实 ${escapeHTML(e.actual)}</span>` : ""}
         </span>
       </div>`;
     }).join("");
@@ -432,7 +437,7 @@ async function init() {
     fetchCalendar();
   } catch (e) {
     updatedAtEl.textContent = "数据加载失败";
-    newsListEl.innerHTML = `<div class="empty">${e.message}</div>`;
+    newsListEl.innerHTML = `<div class="empty">${escapeHTML(e.message)}</div>`;
   }
 }
 

@@ -4,7 +4,6 @@
 Sources (tried in order):
   1. Jin10 CDN calendar API (week/month-based, discovered from rili.jin10.com)
   2. FX678 (汇通网) calendar HTML — reliable server-side rendered fallback
-  3. Investing.com calendar HTML — international fallback
 
 Usage:
     python scripts/fetch_calendar.py --output-dir data
@@ -65,8 +64,12 @@ log = logging.getLogger("fetch_calendar")
 # ─────────────────────────── Jin10 CDN ───────────────────────────
 
 
-def _fetch_jin10_week(dt: datetime) -> tuple[str | None, list[dict[str, Any]]]:
-    """Try Jin10 CDN week-based economics calendar."""
+def _fetch_jin10_week(dt: datetime) -> tuple[str | None, dict[str, list[dict[str, Any]]]]:
+    """Try Jin10 CDN week-based economics calendar.
+
+    Returns (url, {date_str: [events]}) with events distributed across all dates
+    found in the response.
+    """
     iso = dt.isocalendar()
     year, week = iso[0], iso[1]
     url = f"{JIN10_CDN_BASE}/{year}/week/{week}/economics.json"
@@ -78,18 +81,22 @@ def _fetch_jin10_week(dt: datetime) -> tuple[str | None, list[dict[str, Any]]]:
         }, timeout=TIMEOUT)
         if resp.status_code == 200:
             data = resp.json()
-            events = _normalize_jin10_events(data, dt)
-            if events:
-                log.info("  Jin10 week OK: %s (%d events for %s)", url, len(events), dt.strftime("%Y-%m-%d"))
-                return url, events
-            log.debug("  Jin10 week returned data but 0 events for target date")
+            by_date = _normalize_jin10_events_by_date(data)
+            if by_date:
+                total = sum(len(v) for v in by_date.values())
+                log.info("  Jin10 week OK: %s (%d events across %d dates)", url, total, len(by_date))
+                return url, by_date
+            log.debug("  Jin10 week returned data but 0 parseable events")
     except requests.RequestException as exc:
         log.debug("  Jin10 week %s -> %s", url, exc)
-    return None, []
+    return None, {}
 
 
-def _fetch_jin10_month(dt: datetime) -> tuple[str | None, list[dict[str, Any]]]:
-    """Try Jin10 CDN month-based economics calendar."""
+def _fetch_jin10_month(dt: datetime) -> tuple[str | None, dict[str, list[dict[str, Any]]]]:
+    """Try Jin10 CDN month-based economics calendar.
+
+    Returns (url, {date_str: [events]}) with events distributed across all dates.
+    """
     url = f"{JIN10_CDN_BASE}/{dt.year}/month/{dt.month}/economics.json"
     try:
         resp = requests.get(url, headers={
@@ -99,17 +106,22 @@ def _fetch_jin10_month(dt: datetime) -> tuple[str | None, list[dict[str, Any]]]:
         }, timeout=TIMEOUT)
         if resp.status_code == 200:
             data = resp.json()
-            events = _normalize_jin10_events(data, dt)
-            if events:
-                log.info("  Jin10 month OK: %s (%d events for %s)", url, len(events), dt.strftime("%Y-%m-%d"))
-                return url, events
+            by_date = _normalize_jin10_events_by_date(data)
+            if by_date:
+                total = sum(len(v) for v in by_date.values())
+                log.info("  Jin10 month OK: %s (%d events across %d dates)", url, total, len(by_date))
+                return url, by_date
     except requests.RequestException as exc:
         log.debug("  Jin10 month %s -> %s", url, exc)
-    return None, []
+    return None, {}
 
 
-def _normalize_jin10_events(raw_data: Any, target_dt: datetime) -> list[dict[str, Any]]:
-    """Extract and normalize Jin10 calendar events for a specific date."""
+def _normalize_jin10_events_by_date(raw_data: Any) -> dict[str, list[dict[str, Any]]]:
+    """Extract and normalize Jin10 calendar events, grouped by date.
+
+    Instead of filtering for a single target date, returns ALL events grouped
+    by their date field so callers can distribute them across multiple days.
+    """
     events_raw: list[dict[str, Any]] = []
 
     if isinstance(raw_data, list):
@@ -121,15 +133,21 @@ def _normalize_jin10_events(raw_data: Any, target_dt: datetime) -> list[dict[str
                 events_raw = candidate
                 break
 
-    target_str = target_dt.strftime("%Y-%m-%d")
-    result = []
+    result: dict[str, list[dict[str, Any]]] = {}
     for e in events_raw:
         if not isinstance(e, dict):
             continue
-        # Filter by date if the event has a date field
+
+        # Determine date for this event
         event_date = str(e.get("date", e.get("pub_date", "")))
-        if event_date and target_str not in event_date:
-            continue
+        date_key = ""
+        if event_date:
+            # Extract YYYY-MM-DD from various formats (e.g. "2026-02-24 21:30:00")
+            m = re.match(r"(\d{4}-\d{2}-\d{2})", event_date)
+            if m:
+                date_key = m.group(1)
+        if not date_key:
+            continue  # skip events without a parseable date
 
         time_val = str(e.get("time", e.get("pub_time", "")))
         if len(time_val) > 5 and ":" in time_val:
@@ -139,7 +157,7 @@ def _normalize_jin10_events(raw_data: Any, target_dt: datetime) -> list[dict[str
         importance_raw = e.get("importance", e.get("star", e.get("level", 1)))
         importance = max(1, min(3, int(importance_raw))) if str(importance_raw).isdigit() else 1
 
-        result.append({
+        normalized = {
             "time": time_val,
             "country": str(e.get("country", e.get("area", ""))),
             "indicator": str(e.get("indicator", e.get("name", e.get("event_name", e.get("title", ""))))),
@@ -148,7 +166,8 @@ def _normalize_jin10_events(raw_data: Any, target_dt: datetime) -> list[dict[str
             "forecast": str(e.get("forecast", e.get("consensus", ""))),
             "actual": str(e.get("actual", e.get("real", ""))),
             "unit": str(e.get("unit", "")),
-        })
+        }
+        result.setdefault(date_key, []).append(normalized)
     return result
 
 
@@ -387,8 +406,11 @@ def fetch_calendar(days_ahead: int = DAYS_AHEAD) -> dict[str, Any]:
     source_used = "none"
 
     # 1) Try Jin10 CDN — deduplicate requests for same week/month
+    #    Fetch raw data once per week/month, then distribute events to all target dates.
     tried_week_keys: set[tuple[int, int]] = set()
     tried_month_keys: set[tuple[int, int]] = set()
+    jin10_cache: dict[str, list[dict[str, Any]]] = {}  # date_str -> events (accumulated)
+
     for date_key in target_dates:
         dt = datetime.strptime(date_key, "%Y-%m-%d").replace(tzinfo=UTC)
         log.info("Fetching calendar for %s ...", date_key)
@@ -397,21 +419,28 @@ def fetch_calendar(days_ahead: int = DAYS_AHEAD) -> dict[str, Any]:
         week_key = (iso[0], iso[1])
         month_key = (dt.year, dt.month)
 
-        events: list[dict[str, Any]] = []
-        url: str | None = None
-
         if week_key not in tried_week_keys:
             tried_week_keys.add(week_key)
-            url, events = _fetch_jin10_week(dt)
+            url, by_date = _fetch_jin10_week(dt)
+            if url and by_date:
+                working_endpoint = working_endpoint or url
+                source_used = "jin10"
+                for d, evts in by_date.items():
+                    jin10_cache.setdefault(d, []).extend(evts)
 
-        if not events and month_key not in tried_month_keys:
+        if date_key not in jin10_cache and month_key not in tried_month_keys:
             tried_month_keys.add(month_key)
-            url, events = _fetch_jin10_month(dt)
+            url, by_date = _fetch_jin10_month(dt)
+            if url and by_date:
+                working_endpoint = working_endpoint or url
+                source_used = "jin10"
+                for d, evts in by_date.items():
+                    jin10_cache.setdefault(d, []).extend(evts)
 
-        if url and events:
-            working_endpoint = working_endpoint or url
-            source_used = "jin10"
-            dates_data[date_key] = events
+    # Map cached Jin10 events into target dates
+    for date_key in target_dates:
+        if date_key in jin10_cache:
+            dates_data[date_key] = jin10_cache[date_key]
 
     # 2) Fallback: FX678 (single request covers today + previous day)
     jin10_has_data = any(dates_data[d] for d in target_dates)
