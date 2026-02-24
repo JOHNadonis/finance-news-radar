@@ -64,3 +64,18 @@ jobs:
             echo "Push failed (attempt $i), rebasing..."
             git pull --rebase origin main
           done
+
+      - name: Send notifications
+        if: success()
+        env:
+          FEISHU_WEBHOOK: ${{ secrets.FEISHU_WEBHOOK }}
+          FEISHU_SECRET: ${{ secrets.FEISHU_SECRET }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          NOTIFY_TOP_N: "30"
+        run: |
+          if [ -n "$FEISHU_WEBHOOK" ] || [ -n "$TELEGRAM_BOT_TOKEN" ]; then
+            python scripts/notify.py --data-dir data
+          else
+            echo "No notification secrets configured, skipping"
+          fi
