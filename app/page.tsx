@@ -8,8 +8,8 @@ import Header from "@/components/layout/Header";
 import StatsPanel from "@/components/dashboard/StatsPanel";
 import SentimentPanel from "@/components/dashboard/SentimentPanel";
 import MarketSummary from "@/components/dashboard/MarketSummary";
-import EconomicCalendar from "@/components/dashboard/EconomicCalendar";
 import MarketTabs from "@/components/news/MarketTabs";
+import EconomicCalendar from "@/components/dashboard/EconomicCalendar";
 import Controls from "@/components/news/Controls";
 import SitePills from "@/components/news/SitePills";
 import NewsList from "@/components/news/NewsList";
@@ -18,7 +18,6 @@ export default function Home() {
   const { data } = useNewsData();
   const setData = useNewsStore((s) => s.setData);
 
-  const generatedAt = useNewsStore((s) => s.generatedAt);
   const totalFinance = useNewsStore((s) => s.totalFinance);
   const totalRaw = useNewsStore((s) => s.totalRaw);
   const totalAllMode = useNewsStore((s) => s.totalAllMode);
@@ -34,29 +33,26 @@ export default function Home() {
 
   return (
     <main className="mx-auto max-w-[1080px] px-4 py-6 pb-12 max-[760px]:px-2.5 max-[760px]:py-3.5 max-[760px]:pb-8">
-      {/* Hero section */}
-      <Header generatedAt={generatedAt} />
+      {/* Hero — Stats + Sentiment 嵌套在 Hero 内部（与原站一致） */}
+      <Header>
+        <StatsPanel
+          totalItems={totalFinance}
+          totalItemsRaw={totalRaw}
+          totalAllMode={totalAllMode}
+          siteCount={siteCount}
+          sourceCount={sourceCount}
+          archiveTotal={archiveTotal}
+        />
+        <SentimentPanel />
+      </Header>
 
-      {/* Stats panel (inside hero area visually) */}
-      <StatsPanel
-        totalItems={totalFinance}
-        totalItemsRaw={totalRaw}
-        totalAllMode={totalAllMode}
-        siteCount={siteCount}
-        sourceCount={sourceCount}
-        archiveTotal={archiveTotal}
-      />
-
-      {/* Sentiment indicators */}
-      <SentimentPanel />
-
-      {/* Market summary */}
+      {/* Market summary（在 tabs 之前，与原站一致） */}
       <MarketSummary />
 
       {/* Market filter tabs */}
       <MarketTabs />
 
-      {/* Economic calendar */}
+      {/* Economic calendar（在 controls 之前，与原站一致） */}
       <EconomicCalendar />
 
       {/* Controls: search, site select, mode switch */}

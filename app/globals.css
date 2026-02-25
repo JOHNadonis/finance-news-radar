@@ -43,6 +43,16 @@ body {
 /* Selection */
 ::selection { background: var(--color-accent); color: var(--background); }
 
+/* Select dropdown dark background */
+select option {
+  background: #1a2332;
+  color: var(--foreground);
+}
+
+/* Link reset */
+a { color: inherit; text-decoration: none; }
+a:hover { color: var(--color-accent); }
+
 /* Animations */
 @keyframes fade-up {
   from { transform: translateY(6px); opacity: 0; }

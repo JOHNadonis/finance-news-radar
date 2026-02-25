@@ -9,6 +9,7 @@ module.exports = {
       env: {
         NODE_ENV: "production",
         PORT: 3000,
+        CORS_ORIGINS: "https://fina.nexar.site",
       },
       max_memory_restart: "500M",
       log_date_format: "YYYY-MM-DD HH:mm:ss",

@@ -1,16 +1,15 @@
 "use client";
 
-import { fmtTime } from "@/lib/format";
-
 interface HeaderProps {
-  generatedAt: string | null;
+  children?: React.ReactNode;
 }
 
-export default function Header({ generatedAt }: HeaderProps) {
+export default function Header({ children }: HeaderProps) {
   return (
     <header
       className="rounded-[20px] border border-[var(--color-line)] p-6
-        shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
+        shadow-[0_8px_32px_rgba(0,0,0,0.3)]
+        max-[760px]:rounded-2xl max-[760px]:p-4"
       style={{
         background:
           "linear-gradient(135deg, rgba(22, 33, 46, 0.9), rgba(15, 20, 25, 0.95))",
@@ -41,12 +40,8 @@ export default function Header({ generatedAt }: HeaderProps) {
       <p className="mt-2.5 text-sm text-[var(--color-muted)]">
         聚合全球金融快讯、深度文章、加密货币动态，自动采集 &amp; 过滤，每 15
         分钟更新。
-        {generatedAt && (
-          <span className="ml-2 text-xs">
-            更新：{fmtTime(generatedAt)}
-          </span>
-        )}
       </p>
+      {children}
     </header>
   );
 }
