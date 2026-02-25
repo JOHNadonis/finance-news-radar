@@ -1,0 +1,38 @@
+{
+  "name": "nextjs-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "dev:server": "tsx watch server.ts",
+    "build": "next build",
+    "start": "tsx server.ts",
+    "start:pm2": "pm2 start ecosystem.config.cjs"
+  },
+  "dependencies": {
+    "@tanstack/react-virtual": "^3.13.19",
+    "better-sqlite3": "^12.6.2",
+    "next": "16.1.6",
+    "playwright": "^1.58.2",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
+    "swr": "^2.4.0",
+    "ws": "^8.19.0",
+    "zustand": "^5.0.11"
+  },
+  "devDependencies": {
+    "@ducanh2912/next-pwa": "^10.2.9",
+    "@tailwindcss/postcss": "^4",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/ws": "^8.18.1",
+    "sharp": "^0.34.5",
+    "tailwindcss": "^4",
+    "tsx": "^4.21.0",
+    "typescript": "^5"
+  }
+}

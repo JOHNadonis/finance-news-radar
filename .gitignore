@@ -23,3 +23,17 @@ venv/
 
 # OPML private config (use FINANCE_OPML_B64 secret instead)
 # feeds/finance.opml
+
+# Node.js / Next.js
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# SQLite
+data/db/
+
+# PWA generated
+public/sw.js
+public/workbox-*.js
