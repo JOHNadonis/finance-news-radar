@@ -37,3 +37,4 @@ data/db/
 # PWA generated
 public/sw.js
 public/workbox-*.js
+public/fallback-*.js

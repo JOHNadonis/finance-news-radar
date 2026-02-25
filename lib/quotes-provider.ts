@@ -1,5 +1,6 @@
 import { EventEmitter } from "events";
-import { writeFileSync, mkdirSync, existsSync } from "fs";
+import { writeFile, mkdir } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { join } from "path";
 import type { QuoteData } from "./types";
 
@@ -198,9 +199,11 @@ export class QuotesProvider extends EventEmitter {
     if (this.started) return;
     this.started = true;
 
-    // Ensure data directory
+    // Ensure data directory (async, non-blocking)
     const dataDir = join(process.cwd(), "data");
-    if (!existsSync(dataDir)) mkdirSync(dataDir, { recursive: true });
+    if (!existsSync(dataDir)) {
+      mkdir(dataDir, { recursive: true }).catch(() => {});
+    }
 
     // Start polling loops
     this.pollSina();
@@ -331,8 +334,11 @@ export class QuotesProvider extends EventEmitter {
       });
 
       this.binanceWs.on("close", () => {
+        if (!this.started) return; // Don't reconnect after stop()
         console.log("[QuotesProvider] Binance WS closed, reconnecting...");
-        this.binanceReconnectTimer = setTimeout(() => this.connectBinance(), 5000);
+        this.binanceReconnectTimer = setTimeout(() => {
+          if (this.started) this.connectBinance();
+        }, 5000);
       });
 
       this.binanceWs.on("error", (err: Error) => {
@@ -364,13 +370,13 @@ export class QuotesProvider extends EventEmitter {
 
   // ── Cache persistence ──
 
-  private writeCacheToDisk(): void {
+  private async writeCacheToDisk(): Promise<void> {
     try {
       const obj: Record<string, QuoteData> = {};
       for (const [k, v] of this.cache) {
         obj[k] = v;
       }
-      writeFileSync(CACHE_PATH, JSON.stringify(obj, null, 2), "utf-8");
+      await writeFile(CACHE_PATH, JSON.stringify(obj, null, 2), "utf-8");
     } catch (err) {
       console.error("[QuotesProvider] cache write error:", (err as Error).message);
     }

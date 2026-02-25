@@ -106,11 +106,9 @@ class XueqiuScraper {
     const page = await this.context.newPage();
     try {
       await page.goto("https://xueqiu.com", {
-        waitUntil: "domcontentloaded",
+        waitUntil: "networkidle",
         timeout: 15_000,
       });
-      // Wait a bit so cookies are set
-      await page.waitForTimeout(2000);
       this.cookieRefreshedAt = Date.now();
       console.log("[xueqiu-scraper] Cookie refreshed");
     } finally {
@@ -171,41 +169,38 @@ class XueqiuScraper {
 
       let quoteData: XueqiuQuote | null = null;
 
-      // Intercept the XHR for quote.json
-      page.on("response", async (response) => {
-        const url = response.url();
-        if (url.includes("/v5/stock/quote.json") && response.status() === 200) {
-          try {
-            const json = await response.json();
-            const q = json?.data?.quote;
-            if (q) {
-              quoteData = {
-                symbol: q.symbol ?? symbol,
-                name: q.name ?? "",
-                current: q.current ?? 0,
-                change: q.chg ?? 0,
-                percent: q.percent ?? 0,
-                volume: q.volume ?? 0,
-                amount: q.amount ?? 0,
-                turnover_rate: q.turnover_rate ?? undefined,
-                pe_ttm: q.pe_ttm ?? undefined,
-                market_capital: q.market_capital ?? undefined,
-                timestamp: q.timestamp ?? Date.now(),
-              };
-            }
-          } catch {
-            // ignore parse errors
+      // Wait for the quote XHR response instead of using a fixed timeout
+      const quotePromise = page.waitForResponse(
+        (resp) => resp.url().includes("/v5/stock/quote.json") && resp.status() === 200,
+        { timeout: 10_000 }
+      ).then(async (response) => {
+        try {
+          const json = await response.json();
+          const q = json?.data?.quote;
+          if (q) {
+            quoteData = {
+              symbol: q.symbol ?? symbol,
+              name: q.name ?? "",
+              current: q.current ?? 0,
+              change: q.chg ?? 0,
+              percent: q.percent ?? 0,
+              volume: q.volume ?? 0,
+              amount: q.amount ?? 0,
+              turnover_rate: q.turnover_rate ?? undefined,
+              pe_ttm: q.pe_ttm ?? undefined,
+              market_capital: q.market_capital ?? undefined,
+              timestamp: q.timestamp ?? Date.now(),
+            };
           }
-        }
-      });
+        } catch { /* ignore parse errors */ }
+      }).catch(() => { /* timeout — no quote response intercepted */ });
 
       await page.goto(`https://xueqiu.com/S/${symbol}`, {
         waitUntil: "domcontentloaded",
         timeout: 15_000,
       });
 
-      // Wait for the XHR to complete
-      await page.waitForTimeout(3000);
+      await quotePromise;
 
       this.rateLimiter.record();
       this.lastRequestPerSymbol.set(symbol, Date.now());
@@ -252,41 +247,38 @@ class XueqiuScraper {
 
       let topics: XueqiuTopic[] = [];
 
-      page.on("response", async (response) => {
-        const url = response.url();
-        if (
-          (url.includes("/statuses/hot/listV2.json") ||
-            url.includes("/statuses/hot/list.json")) &&
-          response.status() === 200
-        ) {
-          try {
-            const json = await response.json();
-            const items = json?.data?.items || json?.data?.list || [];
-            topics = items.slice(0, 20).map((item: Record<string, unknown>) => {
-              const original = (item.original_status || item) as Record<string, unknown>;
-              return {
-                id: String(original.id ?? item.id ?? ""),
-                title: String(original.title ?? original.text ?? item.title ?? ""),
-                description: String(
-                  original.description ?? original.text ?? ""
-                ).slice(0, 200),
-                reply_count: Number(original.reply_count ?? 0),
-                retweet_count: Number(original.retweet_count ?? 0),
-                created_at: Number(original.created_at ?? Date.now()),
-              } satisfies XueqiuTopic;
-            });
-          } catch {
-            // ignore parse errors
-          }
-        }
-      });
+      const hotPromise = page.waitForResponse(
+        (resp) =>
+          (resp.url().includes("/statuses/hot/listV2.json") ||
+            resp.url().includes("/statuses/hot/list.json")) &&
+          resp.status() === 200,
+        { timeout: 10_000 }
+      ).then(async (response) => {
+        try {
+          const json = await response.json();
+          const items = json?.data?.items || json?.data?.list || [];
+          topics = items.slice(0, 20).map((item: Record<string, unknown>) => {
+            const original = (item.original_status || item) as Record<string, unknown>;
+            return {
+              id: String(original.id ?? item.id ?? ""),
+              title: String(original.title ?? original.text ?? item.title ?? ""),
+              description: String(
+                original.description ?? original.text ?? ""
+              ).slice(0, 200),
+              reply_count: Number(original.reply_count ?? 0),
+              retweet_count: Number(original.retweet_count ?? 0),
+              created_at: Number(original.created_at ?? Date.now()),
+            } satisfies XueqiuTopic;
+          });
+        } catch { /* ignore parse errors */ }
+      }).catch(() => { /* timeout — no hot topics response */ });
 
       await page.goto("https://xueqiu.com", {
         waitUntil: "domcontentloaded",
         timeout: 15_000,
       });
 
-      await page.waitForTimeout(3000);
+      await hotPromise;
 
       this.rateLimiter.record();
 

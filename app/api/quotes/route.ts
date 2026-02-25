@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readFileSync, existsSync } from "fs";
-import { join } from "path";
+import fs from "node:fs/promises";
+import path from "node:path";
 import type { QuoteData } from "@/lib/types";
 
-const CACHE_PATH = join(process.cwd(), "data", "quotes-cache.json");
+const CACHE_PATH = path.join(process.cwd(), "data", "quotes-cache.json");
 
 export async function GET(req: NextRequest) {
   const tickersParam = req.nextUrl.searchParams.get("tickers");
@@ -13,14 +13,11 @@ export async function GET(req: NextRequest) {
 
   const tickers = tickersParam.split(",").map((t) => t.trim()).filter(Boolean);
 
-  // Read from shared cache file
   let allQuotes: Record<string, QuoteData> = {};
-  if (existsSync(CACHE_PATH)) {
-    try {
-      const raw = readFileSync(CACHE_PATH, "utf-8");
-      allQuotes = JSON.parse(raw);
-    } catch { /* cache unreadable, return empty */ }
-  }
+  try {
+    const raw = await fs.readFile(CACHE_PATH, "utf-8");
+    allQuotes = JSON.parse(raw);
+  } catch { /* cache unreadable, return empty */ }
 
   const results: QuoteData[] = [];
   for (const t of tickers) {
