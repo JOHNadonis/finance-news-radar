@@ -13,12 +13,12 @@ export default function MarketSummary() {
         bg-[var(--color-panel)] p-4"
     >
       <div className="mb-2.5 flex items-center gap-2">
-        <h2 className="m-0 font-[var(--font-inter),'Noto_Sans_SC',sans-serif] text-base">
+        <h2 className="m-0 font-[var(--font-heading),'Noto_Sans_SC',sans-serif] text-base">
           市场速览
         </h2>
         {data.type === "llm" && (
           <span
-            className="rounded-full bg-[rgba(29,155,240,0.15)] px-2 py-0.5
+            className="rounded-full bg-[rgba(15,111,127,0.15)] px-2 py-0.5
               text-[10px] font-semibold text-[var(--color-accent-2)]"
           >
             AI 生成

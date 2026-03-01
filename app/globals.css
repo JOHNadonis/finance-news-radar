@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0f1419;
-  --foreground: #e7e9ea;
-  --color-panel: rgba(22, 33, 46, 0.85);
-  --color-muted: #71767b;
-  --color-line: rgba(255, 255, 255, 0.1);
-  --color-accent: #f7931a;
-  --color-accent-2: #1d9bf0;
+  --background: #f4f3ef;
+  --foreground: #12100f;
+  --color-panel: rgba(255, 255, 255, 0.76);
+  --color-muted: #5f5953;
+  --color-line: rgba(24, 19, 16, 0.14);
+  --color-accent: #d94825;
+  --color-accent-2: #0f6f7f;
   --color-up: #00c853;
   --color-down: #ff1744;
 }
@@ -22,9 +22,10 @@
   --color-accent-2: var(--color-accent-2);
   --color-up: var(--color-up);
   --color-down: var(--color-down);
-  --font-sans: "Noto Sans SC", "Inter", system-ui, sans-serif;
-  --font-mono: "Inter", ui-monospace, monospace;
-  --radius-panel: 12px;
+  --font-sans: "Noto Sans SC", "Bricolage Grotesque", system-ui, sans-serif;
+  --font-heading: "Bricolage Grotesque", system-ui, sans-serif;
+  --font-mono: ui-monospace, monospace;
+  --radius-panel: 18px;
 }
 
 body {
@@ -33,19 +34,55 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-image: radial-gradient(ellipse 120% 80% at 50% -10%, rgba(217, 72, 37, 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 80% 60% at 80% 50%, rgba(15, 111, 127, 0.04) 0%, transparent 50%);
 }
 
-/* Scrollbar styling (dark theme) */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(24, 19, 16, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Decorative background orbs */
+.bg-orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: 0;
+}
+.orb-a {
+  width: 500px;
+  height: 500px;
+  top: -120px;
+  left: -80px;
+  background: rgba(217, 72, 37, 0.08);
+}
+.orb-b {
+  width: 400px;
+  height: 400px;
+  bottom: -60px;
+  right: -60px;
+  background: rgba(15, 111, 127, 0.06);
+}
+
+/* Scrollbar styling (light theme) */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-muted); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: rgba(24, 19, 16, 0.2); border-radius: 3px; }
 
 /* Selection */
-::selection { background: var(--color-accent); color: var(--background); }
+::selection { background: var(--color-accent); color: #fff; }
 
-/* Select dropdown dark background */
+/* Select dropdown light background */
 select option {
-  background: #1a2332;
+  background: #fff;
   color: var(--foreground);
 }
 

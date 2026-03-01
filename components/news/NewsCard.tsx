@@ -16,7 +16,7 @@ export default function NewsCard({ item }: NewsCardProps) {
 
   return (
     <article
-      className="border-t border-white/[0.05] px-4 py-3 first:border-t-0
+      className="border-t border-[rgba(22,16,13,0.08)] px-4 py-3.5 first:border-t-0
         animate-[fade-up_250ms_ease]"
     >
       {/* Meta row */}
@@ -27,7 +27,7 @@ export default function NewsCard({ item }: NewsCardProps) {
               ${
                 importance === "high"
                   ? "border border-[rgba(255,23,68,0.3)] bg-[rgba(255,23,68,0.15)] text-[var(--color-down)]"
-                  : "border border-[rgba(247,147,26,0.3)] bg-[rgba(247,147,26,0.15)] text-[var(--color-accent)]"
+                  : "border border-[rgba(217,72,37,0.3)] bg-[rgba(217,72,37,0.15)] text-[var(--color-accent)]"
               }`}
           >
             {importance === "high" ? "重要" : "关注"}
@@ -46,7 +46,7 @@ export default function NewsCard({ item }: NewsCardProps) {
             .map((t) => (
               <span
                 key={t}
-                className="rounded bg-[rgba(29,155,240,0.12)] px-[5px] py-[1px]
+                className="rounded bg-[rgba(15,111,127,0.12)] px-[5px] py-[1px]
                   text-[10px] font-semibold text-[var(--color-accent-2)]"
               >
                 {MARKET_LABELS[t] || t}

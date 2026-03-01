@@ -100,9 +100,9 @@ export default function NewsList() {
   const useVirtual = filtered.length > VIRTUAL_THRESHOLD;
 
   return (
-    <section className="mt-3.5 overflow-hidden rounded-2xl border border-[var(--color-line)] bg-[var(--color-panel)]">
+    <section className="mt-3.5 overflow-hidden rounded-[24px] border border-[var(--color-line)] bg-[var(--color-panel)] backdrop-blur-[3px]">
       <div className="flex items-baseline justify-between border-b border-[var(--color-line)] px-4 py-3.5">
-        <h2 className="m-0 font-[var(--font-inter),'Noto_Sans_SC',sans-serif] text-lg">
+        <h2 className="m-0 font-[var(--font-heading),'Noto_Sans_SC',sans-serif] text-[21px]">
           最近 24 小时更新
         </h2>
         <span className="text-[13px] text-[var(--color-muted)]">
@@ -181,8 +181,8 @@ function RowRenderer({ row }: { row: VirtualRow }) {
   if (row.type === "site-header") {
     return (
       <header
-        className="flex items-center justify-between border-b border-white/[0.05]
-          bg-[rgba(247,147,26,0.06)] px-4 py-3"
+        className="flex items-center justify-between border-b border-[rgba(22,16,13,0.08)]
+          bg-[rgba(217,72,37,0.08)] px-4 py-3"
       >
         <h3 className="m-0 text-[15px]">{row.siteName}</h3>
         <span className="text-xs text-[var(--color-muted)]">
@@ -195,8 +195,8 @@ function RowRenderer({ row }: { row: VirtualRow }) {
   if (row.type === "source-header") {
     return (
       <header
-        className="flex items-center justify-between border-b border-white/[0.04]
-          bg-[rgba(29,155,240,0.04)] px-4 py-2.5"
+        className="flex items-center justify-between border-b border-[rgba(22,16,13,0.06)]
+          bg-[rgba(15,111,127,0.05)] px-4 py-2.5"
       >
         <h3 className="m-0 text-[13px] text-[var(--color-muted)]">{row.source}</h3>
         <span className="text-[11px] text-[var(--color-muted)]">

@@ -12,13 +12,13 @@ export const MARKET_LABELS: Record<string, string> = {
 
 // ── Theme colors (matching existing CSS variables) ──
 export const COLORS = {
-  bg: "#0f1419",
-  panel: "rgba(22, 33, 46, 0.85)",
-  ink: "#e7e9ea",
-  muted: "#71767b",
-  line: "rgba(255, 255, 255, 0.1)",
-  accent: "#f7931a",
-  accent2: "#1d9bf0",
+  bg: "#f4f3ef",
+  panel: "rgba(255, 255, 255, 0.76)",
+  ink: "#12100f",
+  muted: "#5f5953",
+  line: "rgba(24, 19, 16, 0.14)",
+  accent: "#d94825",
+  accent2: "#0f6f7f",
   up: "#00c853",
   down: "#ff1744",
 } as const;

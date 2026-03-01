@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Noto_Sans_SC } from "next/font/google";
+import { Bricolage_Grotesque, Noto_Sans_SC } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
+const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-bricolage",
   display: "swap",
 });
 
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0f1419",
+  themeColor: "#f4f3ef",
 };
 
 export default function RootLayout({
@@ -32,9 +32,11 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body
-        className={`${inter.variable} ${notoSansSC.variable} min-h-screen antialiased`}
+        className={`${bricolage.variable} ${notoSansSC.variable} min-h-screen antialiased`}
       >
-        {children}
+        <div className="bg-orb orb-a" />
+        <div className="bg-orb orb-b" />
+        <div className="relative z-[1]">{children}</div>
       </body>
     </html>
   );

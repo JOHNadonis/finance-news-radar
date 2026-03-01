@@ -32,7 +32,7 @@ export default function EconomicCalendar() {
         className="flex items-center justify-between border-b border-[var(--color-line)]
           px-4 py-3.5 max-[760px]:flex-col max-[760px]:items-start max-[760px]:gap-2"
       >
-        <h2 className="m-0 font-[var(--font-inter),'Noto_Sans_SC',sans-serif] text-base">
+        <h2 className="m-0 font-[var(--font-heading),'Noto_Sans_SC',sans-serif] text-base">
           经济日历
         </h2>
         <div className="flex gap-1">
@@ -46,9 +46,14 @@ export default function EconomicCalendar() {
                 className={`cursor-pointer rounded-full border px-3 py-1 text-xs transition-all
                   ${
                     dt === selectedDate
-                      ? "border-[var(--color-accent)] bg-[rgba(247,147,26,0.15)] font-bold text-[var(--color-accent)]"
+                      ? "border-[rgba(33,22,17,0.35)] font-bold text-[var(--foreground)]"
                       : "border-[var(--color-line)] bg-transparent text-[var(--color-muted)] hover:border-[var(--color-accent)] hover:text-[var(--foreground)]"
                   }`}
+                style={
+                  dt === selectedDate
+                    ? { background: "linear-gradient(90deg, rgba(217,72,37,0.14), rgba(15,111,127,0.16))" }
+                    : undefined
+                }
               >
                 {label}
               </button>
@@ -72,13 +77,13 @@ export default function EconomicCalendar() {
               e.importance >= 3
                 ? "bg-[rgba(255,23,68,0.06)]"
                 : e.importance >= 2
-                  ? "bg-[rgba(247,147,26,0.04)]"
+                  ? "bg-[rgba(217,72,37,0.06)]"
                   : "";
 
             return (
               <div
                 key={`${e.time}-${e.indicator}-${i}`}
-                className={`flex flex-wrap items-center gap-2 border-t border-white/[0.04]
+                className={`flex flex-wrap items-center gap-2 border-t border-[rgba(22,16,13,0.06)]
                   px-4 py-2 text-[13px] first:border-t-0 max-[760px]:text-xs ${impClass}`}
               >
                 <span className="min-w-[42px] font-[var(--font-inter),monospace] text-xs text-[var(--color-muted)]">

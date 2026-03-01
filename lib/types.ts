@@ -167,3 +167,22 @@ export interface XueqiuTopic {
   retweet_count: number;
   created_at: number;
 }
+
+// ── Policy Analysis ──
+
+export interface PolicyAnalysisData {
+  generated_at: string;
+  ok: boolean;
+  error: string | null;
+  type: "llm";
+  text: string;
+  model: string;
+  input_items: number;
+}
+
+export interface LLMSettingsPublic {
+  api_base_url: string;
+  api_key_masked: string;
+  model_name: string;
+  configured: boolean;
+}

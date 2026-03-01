@@ -34,10 +34,10 @@ export default function StatsPanel({
         <div
           key={label}
           className="rounded-[var(--radius-panel)] border border-[var(--color-line)]
-            bg-white/[0.03] px-3 py-2.5"
+            bg-[rgba(255,255,255,0.75)] px-3 py-2.5"
         >
           <div className="text-[11px] text-[var(--color-muted)]">{label}</div>
-          <div className="mt-0.5 font-[var(--font-inter),Inter,sans-serif] text-[22px] font-bold text-[var(--foreground)]">
+          <div className="mt-0.5 font-[var(--font-heading),'Bricolage_Grotesque',sans-serif] text-[24px] font-bold text-[var(--foreground)]">
             {value}
           </div>
         </div>

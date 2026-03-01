@@ -73,7 +73,7 @@ export default function Controls() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="w-full rounded-[10px] border border-[var(--color-line)]
-            bg-white/[0.05] px-3 py-2.5 text-sm text-[var(--foreground)]
+            bg-[rgba(255,255,255,0.8)] px-3 py-2.5 text-sm text-[var(--foreground)]
             placeholder:text-[var(--color-muted)]"
         />
 
@@ -82,7 +82,7 @@ export default function Controls() {
           value={siteFilter}
           onChange={(e) => setSiteFilter(e.target.value)}
           className="w-full cursor-pointer rounded-[10px] border border-[var(--color-line)]
-            bg-white/[0.05] px-3 py-2.5 text-sm text-[var(--foreground)]"
+            bg-[rgba(255,255,255,0.8)] px-3 py-2.5 text-sm text-[var(--foreground)]"
         >
           <option value="">全部站点</option>
           {siteStats.map((s) => (
@@ -93,15 +93,20 @@ export default function Controls() {
         </select>
 
         {/* Mode switch */}
-        <div className="inline-flex overflow-hidden rounded-[10px] border border-[var(--color-line)]">
+        <div className="inline-flex overflow-hidden rounded-[10px] border border-[var(--color-line)] bg-[rgba(255,255,255,0.78)]">
           <button
             type="button"
             onClick={() => setMode("finance")}
             className={`cursor-pointer border-0 px-3 py-[9px] text-[13px] ${
               mode === "finance"
-                ? "bg-[rgba(247,147,26,0.15)] font-bold text-[var(--color-accent)]"
+                ? "font-bold text-[var(--foreground)]"
                 : "bg-transparent text-[var(--color-muted)]"
             }`}
+            style={
+              mode === "finance"
+                ? { background: "linear-gradient(90deg, rgba(217,72,37,0.14), rgba(15,111,127,0.16))" }
+                : undefined
+            }
           >
             金融过滤
           </button>
@@ -110,9 +115,14 @@ export default function Controls() {
             onClick={() => setMode("all")}
             className={`cursor-pointer border-0 px-3 py-[9px] text-[13px] ${
               mode === "all"
-                ? "bg-[rgba(247,147,26,0.15)] font-bold text-[var(--color-accent)]"
+                ? "font-bold text-[var(--foreground)]"
                 : "bg-transparent text-[var(--color-muted)]"
             }`}
+            style={
+              mode === "all"
+                ? { background: "linear-gradient(90deg, rgba(217,72,37,0.14), rgba(15,111,127,0.16))" }
+                : undefined
+            }
           >
             全量
           </button>
@@ -134,7 +144,7 @@ export default function Controls() {
             <span
               className={`h-2.5 w-2.5 rounded-full border transition-all ${
                 allDedup
-                  ? "border-[var(--color-accent)] bg-[var(--color-accent)]"
+                  ? "border-[var(--color-accent-2)] bg-[var(--color-accent-2)]"
                   : "border-[var(--color-muted)] bg-white/10"
               }`}
             />

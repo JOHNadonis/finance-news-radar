@@ -54,10 +54,10 @@ export default function SentimentPanel() {
         <div
           key={c.label}
           className="min-w-[120px] flex-1 rounded-[var(--radius-panel)] border
-            border-[var(--color-line)] bg-white/[0.03] px-3.5 py-3 text-center"
+            border-[var(--color-line)] bg-[rgba(255,255,255,0.75)] px-3.5 py-3 text-center"
         >
           <div
-            className="font-[var(--font-inter),Inter,sans-serif] text-[32px] font-bold leading-none"
+            className="font-[var(--font-heading),'Bricolage_Grotesque',sans-serif] text-[32px] font-bold leading-none"
             style={{ color: c.color }}
           >
             {c.value}

@@ -29,9 +29,14 @@ export default function MarketTabs() {
             font-medium transition-all
             ${
               marketFilter === tab.key
-                ? "border-[var(--color-accent)] bg-[rgba(247,147,26,0.15)] font-bold text-[var(--color-accent)]"
+                ? "border-[rgba(33,22,17,0.35)] font-bold text-[var(--foreground)]"
                 : "border-[var(--color-line)] bg-transparent text-[var(--color-muted)] hover:border-[var(--color-accent)] hover:text-[var(--foreground)]"
             }`}
+          style={
+            marketFilter === tab.key
+              ? { background: "linear-gradient(90deg, rgba(217,72,37,0.14), rgba(15,111,127,0.16))" }
+              : undefined
+          }
         >
           {tab.label}
         </button>

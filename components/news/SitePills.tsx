@@ -46,9 +46,14 @@ export default function SitePills() {
         className={`cursor-pointer rounded-full border px-2.5 py-[5px] text-xs
           ${
             siteFilter === ""
-              ? "border-[var(--color-accent-2)] bg-[rgba(29,155,240,0.12)] text-[var(--color-accent-2)]"
-              : "border-[var(--color-line)] bg-transparent text-[var(--color-muted)]"
+              ? "border-[rgba(33,22,17,0.35)] text-[var(--foreground)]"
+              : "border-[var(--color-line)] bg-[rgba(255,255,255,0.7)] text-[var(--foreground)]"
           }`}
+        style={
+          siteFilter === ""
+            ? { background: "linear-gradient(90deg, rgba(217,72,37,0.14), rgba(15,111,127,0.16))" }
+            : undefined
+        }
       >
         全部
       </button>
@@ -60,9 +65,14 @@ export default function SitePills() {
           className={`cursor-pointer rounded-full border px-2.5 py-[5px] text-xs
             ${
               siteFilter === s.site_id
-                ? "border-[var(--color-accent-2)] bg-[rgba(29,155,240,0.12)] text-[var(--color-accent-2)]"
-                : "border-[var(--color-line)] bg-transparent text-[var(--color-muted)]"
+                ? "border-[rgba(33,22,17,0.35)] text-[var(--foreground)]"
+                : "border-[var(--color-line)] bg-[rgba(255,255,255,0.7)] text-[var(--foreground)]"
             }`}
+          style={
+            siteFilter === s.site_id
+              ? { background: "linear-gradient(90deg, rgba(217,72,37,0.14), rgba(15,111,127,0.16))" }
+              : undefined
+          }
         >
           {s.site_name} {s.count}/{s.raw_count ?? s.count}
         </button>
