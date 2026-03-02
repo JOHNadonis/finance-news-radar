@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNewsData } from "@/hooks/useNewsData";
 import { useNewsStore } from "@/hooks/useNewsStore";
+import { useAnalysis } from "@/hooks/useAnalysis";
 
 import Header from "@/components/layout/Header";
 import StatsPanel from "@/components/dashboard/StatsPanel";
@@ -14,12 +15,13 @@ import EconomicCalendar from "@/components/dashboard/EconomicCalendar";
 import Controls from "@/components/news/Controls";
 import SitePills from "@/components/news/SitePills";
 import NewsList from "@/components/news/NewsList";
-import SettingsModal from "@/components/settings/SettingsModal";
+import AssistantPanel from "@/components/assistant/AssistantPanel";
 
 export default function Home() {
   const { data } = useNewsData();
   const setData = useNewsStore((s) => s.setData);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [assistantOpen, setAssistantOpen] = useState(false);
+  const [initialQuestion, setInitialQuestion] = useState<string | undefined>();
 
   const totalFinance = useNewsStore((s) => s.totalFinance);
   const totalRaw = useNewsStore((s) => s.totalRaw);
@@ -28,11 +30,23 @@ export default function Home() {
   const sourceCount = useNewsStore((s) => s.sourceCount);
   const archiveTotal = useNewsStore((s) => s.archiveTotal);
 
+  const { data: analysisData } = useAnalysis();
+
   useEffect(() => {
     if (data) {
       setData(data);
     }
   }, [data, setData]);
+
+  const handleAskQuestion = useCallback((question: string) => {
+    setInitialQuestion(question);
+    setAssistantOpen(true);
+  }, []);
+
+  const handleCloseAssistant = useCallback(() => {
+    setAssistantOpen(false);
+    setInitialQuestion(undefined);
+  }, []);
 
   return (
     <main className="mx-auto max-w-[1080px] px-4 py-6 pb-12 max-[760px]:px-2.5 max-[760px]:py-3.5 max-[760px]:pb-8">
@@ -53,7 +67,7 @@ export default function Home() {
       <MarketSummary />
 
       {/* AI Policy Analysis */}
-      <PolicyAnalysis />
+      <PolicyAnalysis onAskQuestion={handleAskQuestion} />
 
       {/* Market filter tabs */}
       <MarketTabs />
@@ -75,21 +89,30 @@ export default function Home() {
         Finance News Radar — 数据每 15 分钟自动更新
       </footer>
 
-      {/* Settings gear button */}
-      <button
-        type="button"
-        onClick={() => setSettingsOpen(true)}
-        className="fixed bottom-6 right-6 z-40 flex h-12 w-12 cursor-pointer items-center
-          justify-center rounded-full border border-[var(--color-line)]
-          bg-[rgba(255,255,255,0.85)] text-xl shadow-[0_4px_20px_rgba(21,16,12,0.1)]
-          transition-all hover:shadow-[0_8px_30px_rgba(21,16,12,0.15)]"
-        aria-label="设置"
-      >
-        ⚙
-      </button>
+      {/* AI Assistant floating button */}
+      {!assistantOpen && (
+        <button
+          type="button"
+          onClick={() => setAssistantOpen(true)}
+          className="fixed bottom-6 right-6 z-40 flex h-12 w-12 cursor-pointer items-center
+            justify-center rounded-full border border-[var(--color-line)]
+            bg-[rgba(255,255,255,0.85)] text-xl shadow-[0_4px_20px_rgba(21,16,12,0.1)]
+            transition-all hover:shadow-[0_8px_30px_rgba(21,16,12,0.15)]
+            hover:scale-110"
+          aria-label="AI 金融小助手"
+        >
+          🤖
+        </button>
+      )}
 
-      {/* Settings Modal */}
-      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      {/* AI Assistant Panel */}
+      <AssistantPanel
+        open={assistantOpen}
+        onClose={handleCloseAssistant}
+        initialQuestion={initialQuestion}
+        suggestedQuestions={analysisData?.suggested_questions || []}
+        analysisContext={analysisData?.text}
+      />
     </main>
   );
 }

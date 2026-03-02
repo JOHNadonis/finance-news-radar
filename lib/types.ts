@@ -178,6 +178,12 @@ export interface PolicyAnalysisData {
   text: string;
   model: string;
   input_items: number;
+  suggested_questions: string[];
+}
+
+export interface ChatMessage {
+  role: "user" | "assistant" | "system";
+  content: string;
 }
 
 export interface LLMSettingsPublic {

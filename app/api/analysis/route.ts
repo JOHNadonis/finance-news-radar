@@ -16,6 +16,7 @@ function emptyResult(error: string | null = null) {
     text: "",
     model: "",
     input_items: 0,
+    suggested_questions: [] as string[],
   };
 }
 
@@ -73,7 +74,9 @@ export async function POST() {
 3. **市场影响判断**：评估这些政策信号对各市场（A股、美股、港股、加密、大宗商品、外汇）的潜在影响
 4. **风险点标注**：标明需要重点关注的风险事件
 
-请用简洁专业的中文输出，使用 Markdown 格式，确保分析有深度但不冗长。`;
+请用简洁专业的中文输出，使用 Markdown 格式，确保分析有深度但不冗长。
+
+在分析内容完成后，请用分隔符 ---QUESTIONS--- 另起一行，然后给出 3-5 个推荐追问问题，每行一个问题。这些问题应该帮助用户深入理解当前政策信号和市场影响。`;
 
     const userPrompt = `以下是最近24小时的${inputItems.length}条金融新闻摘要：\n\n${headlines}\n\n请进行政策信号深度分析。`;
 
@@ -82,25 +85,28 @@ export async function POST() {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 60000);
 
-    const res = await fetch(`${baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${cfg.api_key}`,
-      },
-      body: JSON.stringify({
-        model: cfg.model_name || "gpt-4o-mini",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        temperature: 0.7,
-        max_tokens: 2000,
-      }),
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeout);
+    let res: Response;
+    try {
+      res = await fetch(`${baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${cfg.api_key}`,
+        },
+        body: JSON.stringify({
+          model: cfg.model_name || "gpt-4o-mini",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          temperature: 0.7,
+          max_tokens: 3000,
+        }),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (!res.ok) {
       const text = await res.text().catch(() => "");
@@ -110,15 +116,31 @@ export async function POST() {
     const json = await res.json();
     const text = json.choices?.[0]?.message?.content || "";
 
-    // 6. Cache result
+    // 6. Parse suggested questions from response
+    let analysisText = text;
+    let suggested_questions: string[] = [];
+
+    const separator = "---QUESTIONS---";
+    const sepIndex = text.indexOf(separator);
+    if (sepIndex !== -1) {
+      analysisText = text.slice(0, sepIndex).trim();
+      const questionsBlock = text.slice(sepIndex + separator.length).trim();
+      suggested_questions = questionsBlock
+        .split("\n")
+        .map((q: string) => q.replace(/^\d+[\.\)、]\s*/, "").replace(/^[-*]\s*/, "").trim())
+        .filter((q: string) => q.length > 0);
+    }
+
+    // 7. Cache result
     const result = {
       generated_at: new Date().toISOString(),
       ok: true,
       error: null,
       type: "llm" as const,
-      text,
+      text: analysisText,
       model: cfg.model_name || "gpt-4o-mini",
       input_items: inputItems.length,
+      suggested_questions,
     };
 
     if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });

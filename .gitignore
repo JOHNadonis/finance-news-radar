@@ -34,6 +34,10 @@ next-env.d.ts
 # SQLite
 data/db/
 
+# LLM config (contains API keys)
+data/llm-config.json
+data/policy-analysis.json
+
 # PWA generated
 public/sw.js
 public/workbox-*.js

@@ -1,8 +1,13 @@
 "use client";
 
 import { useAnalysis, useTriggerAnalysis, useLLMSettings } from "@/hooks/useAnalysis";
+import MarkdownContent from "@/components/assistant/MarkdownContent";
 
-export default function PolicyAnalysis() {
+interface PolicyAnalysisProps {
+  onAskQuestion?: (question: string) => void;
+}
+
+export default function PolicyAnalysis({ onAskQuestion }: PolicyAnalysisProps) {
   const { data, mutate } = useAnalysis();
   const { trigger, isMutating } = useTriggerAnalysis();
   const { data: settings } = useLLMSettings();
@@ -45,7 +50,7 @@ export default function PolicyAnalysis() {
 
       {notConfigured ? (
         <div className="py-4 text-center text-sm text-[var(--color-muted)]">
-          请先在设置中配置 LLM API（点击右下角齿轮图标）
+          请先在设置中配置 LLM API（点击右下角 🤖 按钮）
         </div>
       ) : !data?.ok && data?.error ? (
         <div className="py-4 text-center text-sm text-[var(--color-muted)]">
@@ -53,9 +58,32 @@ export default function PolicyAnalysis() {
         </div>
       ) : data?.text ? (
         <>
-          <div className="whitespace-pre-wrap text-sm leading-[1.7] text-[var(--foreground)]">
-            {data.text}
-          </div>
+          <MarkdownContent
+            content={data.text}
+            className="text-sm leading-[1.7] text-[var(--foreground)]"
+          />
+
+          {/* Suggested questions */}
+          {data.suggested_questions && data.suggested_questions.length > 0 && (
+            <div className="mt-3 border-t border-[var(--color-line)] pt-3">
+              <p className="mb-2 text-xs text-[var(--color-muted)]">💡 推荐问题：</p>
+              <div className="flex flex-wrap gap-2">
+                {data.suggested_questions.map((q, i) => (
+                  <button
+                    key={i}
+                    onClick={() => onAskQuestion?.(q)}
+                    className="cursor-pointer rounded-full border border-[var(--color-line)]
+                      bg-[rgba(255,255,255,0.7)] px-3 py-1.5 text-xs text-[var(--foreground)]
+                      transition-all hover:border-[var(--color-accent-2)]
+                      hover:text-[var(--color-accent-2)] hover:shadow-sm"
+                  >
+                    {q.length > 25 ? q.slice(0, 25) + "…" : q}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="mt-2.5 flex flex-wrap items-center gap-3 text-[11px] text-[var(--color-muted)]">
             {data.model && <span>模型: {data.model}</span>}
             {data.input_items > 0 && <span>输入: {data.input_items} 条新闻</span>}
