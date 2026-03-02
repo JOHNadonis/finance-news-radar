@@ -84,10 +84,11 @@ export async function POST() {
 
     const userPrompt = `以下是最近24小时的${inputItems.length}条金融新闻摘要：\n\n${headlines}\n\n请进行政策信号深度分析。`;
 
-    // 5. Call LLM
+    // 5. Call LLM with streaming
     const baseUrl = (cfg.api_base_url || "https://api.openai.com/v1").replace(/\/+$/, "");
+    const modelName = cfg.model_name || "gpt-4o-mini";
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 60000);
+    const timeout = setTimeout(() => controller.abort(), 90000);
 
     let res: Response;
     try {
@@ -98,13 +99,14 @@ export async function POST() {
           Authorization: `Bearer ${cfg.api_key}`,
         },
         body: JSON.stringify({
-          model: cfg.model_name || "gpt-4o-mini",
+          model: modelName,
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
           ],
           temperature: 0.7,
           max_tokens: 3000,
+          stream: true,
         }),
         signal: controller.signal,
       });
@@ -117,44 +119,97 @@ export async function POST() {
       return NextResponse.json(emptyResult(`LLM API 错误 ${res.status}: ${text.slice(0, 200)}`));
     }
 
-    const json = await res.json();
-    const text = json.choices?.[0]?.message?.content || "";
+    // 6. Stream response as SSE, collect full text, then cache
+    let fullText = "";
 
-    // 6. Parse suggested questions from response
-    let analysisText = text;
-    let suggested_questions: string[] = [];
+    const readable = new ReadableStream({
+      async start(ctrl) {
+        const encoder = new TextEncoder();
+        const reader = res.body!.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
 
-    const separator = "---QUESTIONS---";
-    const sepIndex = text.indexOf(separator);
-    if (sepIndex !== -1) {
-      analysisText = text.slice(0, sepIndex).trim();
-      const questionsBlock = text.slice(sepIndex + separator.length).trim();
-      suggested_questions = questionsBlock
-        .split("\n")
-        .map((q: string) => q.replace(/^\d+[\.\)、]\s*/, "").replace(/^[-*]\s*/, "").trim())
-        .filter((q: string) => q.length > 0);
-    }
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
 
-    // 7. Cache result
-    const result = {
-      generated_at: new Date().toISOString(),
-      ok: true,
-      error: null,
-      type: "llm" as const,
-      text: analysisText,
-      model: cfg.model_name || "gpt-4o-mini",
-      input_items: inputItems.length,
-      suggested_questions,
-    };
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
 
-    if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
-    writeFileSync(CACHE_PATH, JSON.stringify(result, null, 2), "utf-8");
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed || !trimmed.startsWith("data: ")) continue;
+              const data = trimmed.slice(6);
+              if (data === "[DONE]") continue;
+              try {
+                const json = JSON.parse(data);
+                const content = json.choices?.[0]?.delta?.content;
+                if (content) {
+                  fullText += content;
+                  ctrl.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
+                }
+              } catch {
+                // skip malformed chunks
+              }
+            }
+          }
 
-    return NextResponse.json(result);
+          // Parse questions from full text
+          let analysisText = fullText;
+          let suggested_questions: string[] = [];
+          const separator = "---QUESTIONS---";
+          const sepIndex = fullText.indexOf(separator);
+          if (sepIndex !== -1) {
+            analysisText = fullText.slice(0, sepIndex).trim();
+            const questionsBlock = fullText.slice(sepIndex + separator.length).trim();
+            suggested_questions = questionsBlock
+              .split("\n")
+              .map((q: string) => q.replace(/^\d+[\.\)、]\s*/, "").replace(/^[-*]\s*/, "").trim())
+              .filter((q: string) => q.length > 0);
+          }
+
+          // Cache result
+          const result = {
+            generated_at: new Date().toISOString(),
+            ok: true,
+            error: null,
+            type: "llm" as const,
+            text: analysisText,
+            model: modelName,
+            input_items: inputItems.length,
+            suggested_questions,
+          };
+          if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
+          writeFileSync(CACHE_PATH, JSON.stringify(result, null, 2), "utf-8");
+
+          // Send meta event with final info
+          ctrl.enqueue(encoder.encode(`data: ${JSON.stringify({
+            meta: { model: modelName, input_items: inputItems.length, suggested_questions, generated_at: result.generated_at },
+          })}\n\n`));
+          ctrl.enqueue(encoder.encode("data: [DONE]\n\n"));
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "Stream error";
+          ctrl.enqueue(encoder.encode(`data: ${JSON.stringify({ error: msg })}\n\n`));
+        } finally {
+          ctrl.close();
+        }
+      },
+    });
+
+    return new Response(readable, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache, no-store",
+        Connection: "keep-alive",
+        "X-Accel-Buffering": "no",
+      },
+    });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     return NextResponse.json(
-      emptyResult(msg.includes("abort") ? "LLM 调用超时（60秒）" : `分析失败: ${msg}`)
+      emptyResult(msg.includes("abort") ? "LLM 调用超时（90秒）" : `分析失败: ${msg}`)
     );
   }
 }
