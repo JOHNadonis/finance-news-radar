@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useState, useRef } from "react";
 
 interface MermaidBlockProps {
   chart: string;
@@ -29,15 +29,40 @@ export default function MermaidBlock({ chart }: MermaidBlockProps) {
   const baseId = useId();
   const [svg, setSvg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [stable, setStable] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const chartRef = useRef(chart);
 
+  // Debounce: wait 800ms after chart stops changing before rendering
   useEffect(() => {
+    chartRef.current = chart;
+    setStable(false);
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      setStable(true);
+    }, 800);
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [chart]);
+
+  // Only render when content is stable
+  useEffect(() => {
+    if (!stable) return;
+
     let cancelled = false;
     const id = `mermaid-${baseId.replace(/:/g, "")}`;
+    const currentChart = chartRef.current.trim();
+
+    // Reset error on new render attempt
+    setError(null);
 
     (async () => {
       try {
         const mod = await loadMermaid();
-        const { svg: rendered } = await mod.default.render(id, chart.trim());
+        const { svg: rendered } = await mod.default.render(id, currentChart);
         if (!cancelled) setSvg(rendered);
       } catch (err) {
         if (!cancelled) {
@@ -49,7 +74,7 @@ export default function MermaidBlock({ chart }: MermaidBlockProps) {
     return () => {
       cancelled = true;
     };
-  }, [chart, baseId]);
+  }, [stable, baseId]);
 
   if (error) {
     return (
@@ -66,23 +91,24 @@ export default function MermaidBlock({ chart }: MermaidBlockProps) {
     );
   }
 
-  if (!svg) {
+  // Not yet stable (still receiving streaming content) — show quiet placeholder
+  if (!stable || !svg) {
     return (
-      <div className="mermaid-container">
+      <div className="mermaid-container" style={{ minHeight: 60 }}>
         <div
           style={{
             display: "flex",
             alignItems: "center",
             gap: "0.5em",
             color: "var(--color-muted)",
-            fontSize: "0.9em",
-            padding: "1em 0",
+            fontSize: "0.85em",
+            padding: "0.8em 0",
           }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" style={{ animation: "spin 1s linear infinite" }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" style={{ animation: "spin 1s linear infinite" }}>
             <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" strokeDasharray="31.4 31.4" strokeLinecap="round" />
           </svg>
-          图表加载中…
+          图表生成中…
         </div>
       </div>
     );
