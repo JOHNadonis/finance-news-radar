@@ -3,6 +3,7 @@
 import { memo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import MermaidBlock from "./MermaidBlock";
 
 interface MarkdownContentProps {
   content: string;
@@ -38,6 +39,16 @@ function MarkdownContentInner({ content, className = "" }: MarkdownContentProps)
               {children}
             </a>
           ),
+          code: ({ className, children, ...rest }) => {
+            if (className?.includes("language-mermaid")) {
+              return <MermaidBlock chart={String(children)} />;
+            }
+            return (
+              <code className={className} {...rest}>
+                {children}
+              </code>
+            );
+          },
         }}
       >
         {content}

@@ -192,3 +192,30 @@ export interface LLMSettingsPublic {
   model_name: string;
   configured: boolean;
 }
+
+// ── Model Groups & Access Keys ──
+
+export interface ModelGroup {
+  id: number;
+  name: string;
+  api_base_url: string;
+  api_key: string;
+  model_name: string;
+  is_default: number;
+  created_at: string;
+}
+
+export interface AccessKey {
+  id: number;
+  key_value: string;
+  label: string | null;
+  model_group_id: number;
+  is_active: number;
+  created_at: string;
+  last_used_at: string | null;
+}
+
+export interface AccessKeyWithGroup extends AccessKey {
+  group_name: string;
+  model_name: string;
+}

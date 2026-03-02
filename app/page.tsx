@@ -16,12 +16,14 @@ import Controls from "@/components/news/Controls";
 import SitePills from "@/components/news/SitePills";
 import NewsList from "@/components/news/NewsList";
 import AssistantPanel from "@/components/assistant/AssistantPanel";
+import TextSelectionQuote from "@/components/assistant/TextSelectionQuote";
 
 export default function Home() {
   const { data } = useNewsData();
   const setData = useNewsStore((s) => s.setData);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [initialQuestion, setInitialQuestion] = useState<string | undefined>();
+  const [quotedText, setQuotedText] = useState<string | undefined>();
 
   const totalFinance = useNewsStore((s) => s.totalFinance);
   const totalRaw = useNewsStore((s) => s.totalRaw);
@@ -43,9 +45,15 @@ export default function Home() {
     setAssistantOpen(true);
   }, []);
 
+  const handleQuoteToAssistant = useCallback((text: string) => {
+    setQuotedText(text);
+    setAssistantOpen(true);
+  }, []);
+
   const handleCloseAssistant = useCallback(() => {
     setAssistantOpen(false);
     setInitialQuestion(undefined);
+    setQuotedText(undefined);
   }, []);
 
   return (
@@ -105,6 +113,9 @@ export default function Home() {
         </button>
       )}
 
+      {/* Text selection quote button */}
+      <TextSelectionQuote onQuote={handleQuoteToAssistant} />
+
       {/* AI Assistant Panel */}
       <AssistantPanel
         open={assistantOpen}
@@ -112,6 +123,7 @@ export default function Home() {
         initialQuestion={initialQuestion}
         suggestedQuestions={analysisData?.suggested_questions || []}
         analysisContext={analysisData?.text}
+        quotedText={quotedText}
       />
     </main>
   );

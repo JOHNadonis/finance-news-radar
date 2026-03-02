@@ -36,10 +36,19 @@ export function useChat() {
         content: c,
       }));
 
+      // Include access key if stored in localStorage
+      const storedAccessKey = typeof window !== "undefined"
+        ? localStorage.getItem("fnr_access_key")
+        : null;
+      const fetchBody: Record<string, unknown> = { messages: allMessages, context };
+      if (storedAccessKey) {
+        fetchBody.access_key = storedAccessKey;
+      }
+
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: allMessages, context }),
+        body: JSON.stringify(fetchBody),
         signal: abortRef.current.signal,
       });
 

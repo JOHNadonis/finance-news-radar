@@ -14,6 +14,7 @@ interface AssistantPanelProps {
   initialQuestion?: string;
   suggestedQuestions?: string[];
   analysisContext?: string;
+  quotedText?: string;
 }
 
 export default function AssistantPanel({
@@ -22,6 +23,7 @@ export default function AssistantPanel({
   initialQuestion,
   suggestedQuestions = [],
   analysisContext,
+  quotedText,
 }: AssistantPanelProps) {
   const [state, setState] = useState<PanelState>("closed");
   const [tab, setTab] = useState<Tab>("chat");
@@ -33,6 +35,7 @@ export default function AssistantPanel({
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
   const [hasAutoSent, setHasAutoSent] = useState<string | null>(null);
   const dragCleanupRef = useRef<(() => void) | null>(null);
+  const [activeQuote, setActiveQuote] = useState<string | null>(null);
 
   const { messages, isStreaming, sendMessage, stopStreaming, clearMessages } = useChat();
 
@@ -45,6 +48,12 @@ export default function AssistantPanel({
   const [testResult, setTestResult] = useState<{ ok: boolean; error?: string } | null>(null);
   const [saving, setSaving] = useState(false);
 
+  // Access key states
+  const [accessKey, setAccessKey] = useState("");
+  const [accessKeyValid, setAccessKeyValid] = useState(false);
+  const [accessKeyInfo, setAccessKeyInfo] = useState<{ group_name: string; model_name: string } | null>(null);
+  const [verifyingKey, setVerifyingKey] = useState(false);
+
   // Sync settings
   useEffect(() => {
     if (settings) {
@@ -54,6 +63,36 @@ export default function AssistantPanel({
       setTestResult(null);
     }
   }, [settings]);
+
+  // Check stored access key on mount
+  useEffect(() => {
+    const stored = localStorage.getItem("fnr_access_key");
+    if (stored) {
+      setAccessKey(stored);
+      fetch(`/api/models?key=${encodeURIComponent(stored)}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.valid) {
+            setAccessKeyValid(true);
+            setAccessKeyInfo({ group_name: data.group_name, model_name: data.model_name });
+          } else {
+            localStorage.removeItem("fnr_access_key");
+            setAccessKey("");
+          }
+        })
+        .catch(() => {
+          // ignore
+        });
+    }
+  }, []);
+
+  // Sync quoted text
+  useEffect(() => {
+    if (quotedText) {
+      setActiveQuote(quotedText);
+      setTab("chat");
+    }
+  }, [quotedText]);
 
   // Open/close
   useEffect(() => {
@@ -91,10 +130,19 @@ export default function AssistantPanel({
 
   const handleSend = useCallback(() => {
     const text = input.trim();
-    if (!text || isStreaming) return;
+    if ((!text && !activeQuote) || isStreaming) return;
+
+    let message: string;
+    if (activeQuote) {
+      message = `用户引用了以下文字：\n> ${activeQuote}\n\n${text || "请针对这段引用内容进行分析。"}`;
+      setActiveQuote(null);
+    } else {
+      message = text;
+    }
+
     setInput("");
-    sendMessage(text, analysisContext);
-  }, [input, isStreaming, sendMessage, analysisContext]);
+    sendMessage(message, analysisContext);
+  }, [input, isStreaming, sendMessage, analysisContext, activeQuote]);
 
   const handleQuestionClick = useCallback((q: string) => {
     if (isStreaming) return;
@@ -233,6 +281,7 @@ export default function AssistantPanel({
   return (
     <div
       ref={panelRef}
+      data-assistant-panel
       className="z-50 flex flex-col overflow-hidden rounded-2xl border border-[var(--color-line)]
         bg-[rgba(255,255,255,0.95)] shadow-[0_24px_55px_rgba(21,16,12,0.15)] backdrop-blur-md
         animate-[slide-up_0.3s_ease-out]"
@@ -364,6 +413,21 @@ export default function AssistantPanel({
 
           {/* Input area */}
           <div className="shrink-0 border-t border-[var(--color-line)] bg-[rgba(255,255,255,0.6)] p-3">
+            {activeQuote && (
+              <div className="mb-2 flex items-start gap-2 rounded-md border-l-[3px] border-l-[var(--color-accent-2)]
+                bg-[rgba(15,111,127,0.03)] px-2.5 py-1.5">
+                <p className="flex-1 text-xs leading-relaxed text-[var(--color-muted)] line-clamp-3">
+                  {activeQuote}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setActiveQuote(null)}
+                  className="shrink-0 cursor-pointer text-sm text-[var(--color-muted)]
+                    transition-colors hover:text-[var(--foreground)]"
+                  aria-label="取消引用"
+                >×</button>
+              </div>
+            )}
             <div className="flex gap-2">
               <textarea
                 ref={inputRef}
@@ -391,7 +455,7 @@ export default function AssistantPanel({
               ) : (
                 <button
                   onClick={handleSend}
-                  disabled={!input.trim()}
+                  disabled={!input.trim() && !activeQuote}
                   className="shrink-0 cursor-pointer rounded-xl border border-[var(--color-accent-2)]
                     bg-[var(--color-accent-2)] px-3 py-2 text-sm font-medium text-white
                     transition-all hover:opacity-90
@@ -419,101 +483,187 @@ export default function AssistantPanel({
       {/* Settings Tab */}
       {tab === "settings" && (
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          <label className="block">
-            <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
-              API Base URL
+          {/* Access Key Section */}
+          <div className="space-y-2">
+            <span className="block text-xs font-semibold text-[var(--foreground)]">
+              Access Key
             </span>
-            <input
-              type="text"
-              value={baseUrl}
-              onChange={(e) => setBaseUrl(e.target.value)}
-              placeholder="https://api.openai.com/v1"
-              className="w-full rounded-[10px] border border-[var(--color-line)]
-                bg-[rgba(255,255,255,0.8)] px-3 py-2.5 text-sm text-[var(--foreground)]
-                placeholder:text-[var(--color-muted)]"
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
-              API Key
-              {settings?.configured && (
-                <span className="ml-2 text-[10px] text-[var(--color-accent-2)]">
-                  当前: {settings.api_key_masked}
-                </span>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={accessKey}
+                onChange={(e) => setAccessKey(e.target.value)}
+                placeholder="fnr_..."
+                disabled={accessKeyValid}
+                className="flex-1 rounded-[10px] border border-[var(--color-line)]
+                  bg-[rgba(255,255,255,0.8)] px-3 py-2.5 text-sm text-[var(--foreground)]
+                  placeholder:text-[var(--color-muted)] disabled:opacity-60"
+              />
+              {!accessKeyValid ? (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!accessKey.trim()) return;
+                    setVerifyingKey(true);
+                    try {
+                      const res = await fetch(`/api/models?key=${encodeURIComponent(accessKey.trim())}`);
+                      const data = await res.json();
+                      if (data.valid) {
+                        localStorage.setItem("fnr_access_key", accessKey.trim());
+                        setAccessKeyValid(true);
+                        setAccessKeyInfo({ group_name: data.group_name, model_name: data.model_name });
+                      } else {
+                        setAccessKeyInfo(null);
+                        setAccessKeyValid(false);
+                      }
+                    } catch {
+                      // ignore
+                    } finally {
+                      setVerifyingKey(false);
+                    }
+                  }}
+                  disabled={verifyingKey || !accessKey.trim()}
+                  className="shrink-0 cursor-pointer rounded-full border border-[var(--color-accent-2)]
+                    bg-transparent px-3 py-1.5 text-xs font-medium text-[var(--color-accent-2)]
+                    transition-all hover:bg-[rgba(15,111,127,0.08)]
+                    disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {verifyingKey ? "验证中..." : "验证"}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    localStorage.removeItem("fnr_access_key");
+                    setAccessKey("");
+                    setAccessKeyValid(false);
+                    setAccessKeyInfo(null);
+                  }}
+                  className="shrink-0 cursor-pointer rounded-full border border-[var(--color-down)]
+                    bg-transparent px-3 py-1.5 text-xs font-medium text-[var(--color-down)]
+                    transition-all hover:bg-[rgba(255,23,68,0.08)]"
+                >
+                  清除密钥
+                </button>
               )}
-            </span>
-            <input
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder={settings?.configured ? "留空则不修改" : "sk-..."}
-              className="w-full rounded-[10px] border border-[var(--color-line)]
-                bg-[rgba(255,255,255,0.8)] px-3 py-2.5 text-sm text-[var(--foreground)]
-                placeholder:text-[var(--color-muted)]"
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
-              模型名称
-            </span>
-            <input
-              type="text"
-              value={modelName}
-              onChange={(e) => setModelName(e.target.value)}
-              placeholder="gpt-4o-mini"
-              className="w-full rounded-[10px] border border-[var(--color-line)]
-                bg-[rgba(255,255,255,0.8)] px-3 py-2.5 text-sm text-[var(--foreground)]
-                placeholder:text-[var(--color-muted)]"
-            />
-          </label>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleTest}
-              disabled={testing}
-              className="cursor-pointer rounded-full border border-[var(--color-accent-2)]
-                bg-transparent px-3 py-1.5 text-xs font-medium text-[var(--color-accent-2)]
-                transition-all hover:bg-[rgba(15,111,127,0.08)]
-                disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {testing ? "测试中..." : "测试连接"}
-            </button>
-            {testResult && (
-              <span
-                className={`text-xs font-medium ${
-                  testResult.ok ? "text-[var(--color-up)]" : "text-[var(--color-down)]"
-                }`}
-              >
-                {testResult.ok ? "✅ 连接成功" : testResult.error || "连接失败"}
-              </span>
+            </div>
+            {accessKeyValid && accessKeyInfo && (
+              <p className="text-xs font-medium text-[var(--color-up)]">
+                已连接：{accessKeyInfo.group_name} / {accessKeyInfo.model_name}
+              </p>
+            )}
+            {!accessKeyValid && accessKey && !verifyingKey && accessKeyInfo === null && (
+              <p className="text-xs text-[var(--color-down)]">密钥无效，请检查后重试</p>
             )}
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={() => setTab("chat")}
-              className="cursor-pointer rounded-full border border-[var(--color-line)]
-                bg-transparent px-4 py-2 text-sm text-[var(--color-muted)]
-                transition-all hover:text-[var(--foreground)]"
-            >
-              取消
-            </button>
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving}
-              className="cursor-pointer rounded-full border border-[var(--color-accent)]
-                bg-[var(--color-accent)] px-4 py-2 text-sm font-medium text-white
-                transition-all hover:opacity-90
-                disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {saving ? "保存中..." : "保存"}
-            </button>
-          </div>
+          {/* Divider */}
+          {!accessKeyValid && (
+            <>
+              <div className="flex items-center gap-3 py-1">
+                <div className="flex-1 border-t border-[var(--color-line)]" />
+                <span className="text-xs text-[var(--color-muted)]">或手动配置</span>
+                <div className="flex-1 border-t border-[var(--color-line)]" />
+              </div>
+
+              {/* Manual Config Section */}
+              <label className="block">
+                <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+                  API Base URL
+                </span>
+                <input
+                  type="text"
+                  value={baseUrl}
+                  onChange={(e) => setBaseUrl(e.target.value)}
+                  placeholder="https://api.openai.com/v1"
+                  className="w-full rounded-[10px] border border-[var(--color-line)]
+                    bg-[rgba(255,255,255,0.8)] px-3 py-2.5 text-sm text-[var(--foreground)]
+                    placeholder:text-[var(--color-muted)]"
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+                  API Key
+                  {settings?.configured && (
+                    <span className="ml-2 text-[10px] text-[var(--color-accent-2)]">
+                      当前: {settings.api_key_masked}
+                    </span>
+                  )}
+                </span>
+                <input
+                  type="password"
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  placeholder={settings?.configured ? "留空则不修改" : "sk-..."}
+                  className="w-full rounded-[10px] border border-[var(--color-line)]
+                    bg-[rgba(255,255,255,0.8)] px-3 py-2.5 text-sm text-[var(--foreground)]
+                    placeholder:text-[var(--color-muted)]"
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+                  模型名称
+                </span>
+                <input
+                  type="text"
+                  value={modelName}
+                  onChange={(e) => setModelName(e.target.value)}
+                  placeholder="gpt-4o-mini"
+                  className="w-full rounded-[10px] border border-[var(--color-line)]
+                    bg-[rgba(255,255,255,0.8)] px-3 py-2.5 text-sm text-[var(--foreground)]
+                    placeholder:text-[var(--color-muted)]"
+                />
+              </label>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleTest}
+                  disabled={testing}
+                  className="cursor-pointer rounded-full border border-[var(--color-accent-2)]
+                    bg-transparent px-3 py-1.5 text-xs font-medium text-[var(--color-accent-2)]
+                    transition-all hover:bg-[rgba(15,111,127,0.08)]
+                    disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {testing ? "测试中..." : "测试连接"}
+                </button>
+                {testResult && (
+                  <span
+                    className={`text-xs font-medium ${
+                      testResult.ok ? "text-[var(--color-up)]" : "text-[var(--color-down)]"
+                    }`}
+                  >
+                    {testResult.ok ? "连接成功" : testResult.error || "连接失败"}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setTab("chat")}
+                  className="cursor-pointer rounded-full border border-[var(--color-line)]
+                    bg-transparent px-4 py-2 text-sm text-[var(--color-muted)]
+                    transition-all hover:text-[var(--foreground)]"
+                >
+                  取消
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="cursor-pointer rounded-full border border-[var(--color-accent)]
+                    bg-[var(--color-accent)] px-4 py-2 text-sm font-medium text-white
+                    transition-all hover:opacity-90
+                    disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {saving ? "保存中..." : "保存"}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>
